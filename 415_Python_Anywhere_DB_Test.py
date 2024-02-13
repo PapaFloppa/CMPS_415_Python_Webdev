@@ -1,4 +1,4 @@
-####Written by my teacher Dr.Cris Koutsougeras####
+####some code taken from the code made by my teacher Dr.Cris Koutsougeras####
 ####i.e not my work####
 ####Code to access MYSQL database from a browser####
 ####This Returns everything in a SQL Database to a web page####
