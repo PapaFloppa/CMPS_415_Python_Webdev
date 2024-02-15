@@ -3,7 +3,7 @@
 #CMPS 415-Enterprise Systems
 #02.12.2024
 
-import mysql.connector 
+import mysql.connector
 import cgi
 import copy
 from urllib.parse import parse_qs
@@ -25,9 +25,9 @@ select_all = "SELECT * FROM Books"
 
 def search_query_maker(db_columns): #takes all null values out of the disctionary of search values
     ###Making the dictionary of user input easier to process###
-    db_columns_copy = copy.copy(db_columns) #because a dictionary will not let you delete from it while iterating 
+    db_columns_copy = copy.copy(db_columns) #because a dictionary will not let you delete from it while iterating
     for i in db_columns:
-        if(db_columns_copy[i] == ""): #iterate through the original and edit the copy 
+        if(db_columns_copy[i] == ""): #iterate through the original and edit the copy
             del db_columns_copy[i]
     db_columns = db_columns_copy
     db_columns_copy = None #make the copy not exist anymore and update the original
@@ -35,7 +35,7 @@ def search_query_maker(db_columns): #takes all null values out of the disctionar
     print(db_columns)
 
 ###Make the query string for searching###
-    query = f"SELECT * FROM {DBtable} WHERE " 
+    query = f"SELECT * FROM {DBtable} WHERE "
     for k in db_columns:
         frag_string = f"{k} LIKE '{db_columns[k]}%' AND "
         query += frag_string
@@ -218,7 +218,7 @@ done = """
   top: 7%;
   transform: translate(-50%, -50%);
   animation: color-change 60s infinite;
-    font-size: 5rem;
+    font-size: 4rem;
 
 
 }
@@ -325,26 +325,38 @@ def application(environ, start_response):
         db_columns = {"Title":  myQueryString.get('book_title', [''])[0], "Author": myQueryString.get('book_author', [''])[0], "ISBN": myQueryString.get('book_isbn', [''])[0], "Publisher": myQueryString.get('book_publisher', [''])[0], "Year": myQueryString.get('book_year', [''])[0]}
 
         query = search_query_maker(db_columns)
-
+        outp = ""
         try:
             mycursor.execute(query) #Execute the query
 
             results = mycursor.fetchall() #Get the results in an array
 
             separator=', ' ## define how to separate printed items (see below)
-            for row in results: #Prints the results
-                outp += separator.join(map(str,row))  ## join all elements of "row" mapped as strings using "separator"
-                outp += "<br>\n"
-        except:
-            outp = f"Something went wrong: {err}" #print the error if there is any
+            if not results:
+                outp += "<div id= 'result'> Nothing Found </div>"
 
-        outp += """
+            else:
+                for row in results: #Prints the results
+                    outp += f"<div id= 'result'> {separator.join(map(str,row))} </div>" ## join all elements of "row" mapped as strings using "separator"
+                    outp += "<br>\n"
+        except mysql.connector.Error as err:
+            outp = "<div id= 'result'>" + "Something went wrong: {}".format(err) + "</div>" #print the error if there is any
+        else:
+            outp += """
             <style>
             #buttons{
             display: flex;
             justify-content: space-evenly;
             flex-direction: row;
         }
+        #results{
+    display: flex;
+    align-content: space-around;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
         h1 {
             display: flex;
             justify-content: center;
@@ -376,40 +388,48 @@ def application(environ, start_response):
 ##########Insert Data Handling###########
     elif environ.get('PATH_INFO') == '/inserted' :
         mydb = mysql.connector.connect(host=DBhost, user=DBuser, passwd=DBpass, database=DB)
+        myQueryString = parse_qs(environ.get('QUERY_STRING'))
         mycursor = mydb.cursor()
         db_columns = {"Title":  myQueryString.get('book_title')[0], "Author": myQueryString.get('book_author')[0], "ISBN": myQueryString.get('book_isbn')[0], "Publisher": myQueryString.get('book_publisher')[0], "Year": myQueryString.get('book_year')[0]}
         query = insert_query_maker(db_columns)
 
-        outp += "<p>Query is " + query + "<p>\n"
         try: #try to execute and print the query
             mycursor.execute(query)
             mycursor.execute(select_all)
             results = mycursor.fetchall()
 
             ## Print all the results
-            outp = "Your new table is:" + "<br>\n"
+            outp = "<div id= 'results'> Your new table is:" + "<br>\n </div>"
             separator=', '
             for row in results:
-                outp += separator.join(map(str,row))
+                outp += f"<div id= 'results'> {separator.join(map(str,row))} </div>"
                 outp += "<br>\n"
         except mysql.connector.Error as err: #if there are any SQL errors print them
-            outp = f"Something went wrong: {err}"
-
+            outp += "<div id= 'result'>" + "Something went wrong: {}".format(err) + "</div>" #print the error if there is any
+        else:
             ## Finished; Close the DB
             mydb.close()
 
             outp += """
-                <style>
+            <style>
+                #results{
+    display: flex;
+    align-content: space-around;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
                 #buttons{
-                display: flex;
-                justify-content: space-evenly;
-                flex-direction: row;
-            }
-            h1 {
-                display: flex;
-                justify-content: center;
-                flex-direction: row;
-            }
+                    display: flex;
+                    justify-content: space-evenly;
+                    flex-direction: row;
+                }
+                h1 {
+                    display: flex;
+                    justify-content: center;
+                    flex-direction: row;
+                }
             </style>
                 <body>
                     <h1>Would you like to go again?</h1>
