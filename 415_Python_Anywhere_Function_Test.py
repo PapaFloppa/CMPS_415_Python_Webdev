@@ -1,3 +1,8 @@
+#Quade Witt
+#Python Anywhere DB Part 1 Func Test (A isolated enviornment for making sure my functions work for assignments)
+#CMPS 415-Enterprise Systems
+#02.12.2024
+
 import copy
 DBuser="Qwitt" ## This must be your own user ID
 DBpass="NoSaltNoPepper" ## This must be the password you specified for accessing mysql upon creation of the DB
