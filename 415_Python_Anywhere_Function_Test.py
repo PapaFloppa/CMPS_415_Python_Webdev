@@ -5,8 +5,8 @@
 
 import copy
 DBuser="Qwitt" ## This must be your own user ID
-DBpass="NoSaltNoPepper" ## This must be the password you specified for accessing mysql upon creation of the DB
-DB="Qwitt$Bookstore"  ## This is your database as it appears on the Databases dashboard
+DBpass="NoSaltNoPepper" ## DB pass
+DB="Qwitt$Bookstore"  ## This is the database
 DBtable="Books"  ## This is the table that we created in the database
 DBhost ="Qwitt.mysql.pythonanywhere-services.com" 
 def search_query_makerinator():

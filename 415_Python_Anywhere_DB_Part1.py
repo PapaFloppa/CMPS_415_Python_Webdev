@@ -3,7 +3,7 @@
 #CMPS 415-Enterprise Systems
 #02.12.2024
 
-import mysql.connector
+import mysql.connector 
 import cgi
 import copy
 from urllib.parse import parse_qs
@@ -13,10 +13,10 @@ outp=""
 form = cgi.FieldStorage()
 
 ## Define variables needed throughout the script
-DBuser="Qwitt" ## This must be your own user ID
-DBpass="NoSaltNoPepper" ## This must be the password you specified for accessing mysql upon creation of the DB
-DB="Qwitt$Bookstore"  ## This is your database as it appears on the Databases dashboard
-DBtable="Books"  ## This is the table that we created in the database
+DBuser="Qwitt" ## DB username
+DBpass="NoSaltNoPepper" ## DB password
+DB="Qwitt$Bookstore"  ## DB database name
+DBtable="Books"  ##DB Table
 DBhost ="Qwitt.mysql.pythonanywhere-services.com"
 select_all = "SELECT * FROM Books"
 
@@ -24,16 +24,18 @@ select_all = "SELECT * FROM Books"
 
 
 def search_query_maker(db_columns): #takes all null values out of the disctionary of search values
-    db_columns_copy = copy.copy(db_columns)
+    ###Making the dictionary of user input easier to process###
+    db_columns_copy = copy.copy(db_columns) #because a dictionary will not let you delete from it while iterating 
     for i in db_columns:
-        if(db_columns_copy[i] == ""):
+        if(db_columns_copy[i] == ""): #iterate through the original and edit the copy 
             del db_columns_copy[i]
     db_columns = db_columns_copy
-    db_columns_copy = None
+    db_columns_copy = None #make the copy not exist anymore and update the original
     print(db_columns_copy)
     print(db_columns)
 
-    query = f"SELECT * FROM {DBtable} WHERE "
+###Make the query string for searching###
+    query = f"SELECT * FROM {DBtable} WHERE " 
     for k in db_columns:
         frag_string = f"{k} LIKE '{db_columns[k]}%' AND "
         query += frag_string
@@ -42,7 +44,7 @@ def search_query_maker(db_columns): #takes all null values out of the disctionar
     return query
 
 def insert_query_maker(db_columns):
-
+###Make the query string for insertion###
     element_string = ""
     query = f"INSERT INTO {DBtable} VALUES ({(element_string)}"
     for k in db_columns:
@@ -52,11 +54,11 @@ def insert_query_maker(db_columns):
     query = f"{query});"
     return query
 
-####Checks the MySQL connection and fixes it if anything is wrong, I was having issues with it though####
+####Checks the connection and fixes it if anything is wrong, I was having issues with it though####
 """def MySQL_Check(self):
     if (self.mysql.connector.MySQLConnection.is_connected() == 0): #check if a connection already exists
         outp += "<p>DB Connected...<br>"
-        return mysql.connector.connect(host=DBhost, user=DBuser, passwd=DBpass, database=DB) #if not make one
+        return mysql.connector.connect(host=DBhost, user=DBuser, passwd=DBpass, database=DB) #if no connection exists make one
 
     else: #if one does exist
         Current_Database = mysql.connector.MySQLConnection.database #check if the current DB is the one you want
@@ -305,36 +307,36 @@ button:hover {
 ### Router ###
 def application(environ, start_response):
     global outp
-    if environ.get('PATH_INFO') == '/':
+    if environ.get('PATH_INFO') == '/': ##The 'search or insert?' page
         status = '200 OK'
         content = Start
-    elif environ.get('PATH_INFO') == '/insert' :
+    elif environ.get('PATH_INFO') == '/insert' : ##Hosts the insert form
         status = '200 OK'
         content = insert
-    elif environ.get('PATH_INFO') == '/search' :
+    elif environ.get('PATH_INFO') == '/search' : ##Hosts the search form
         status = '200 OK'
         content = search
 
 ##########Search Data Handling###########
-    elif environ.get('PATH_INFO') == '/searched' :
+    elif environ.get('PATH_INFO') == '/searched' : #Handles the user data from search form
         myQueryString = parse_qs(environ.get('QUERY_STRING'))
         mydb = mysql.connector.connect(host=DBhost, user=DBuser, passwd=DBpass, database=DB)
         mycursor = mydb.cursor()
         db_columns = {"Title":  myQueryString.get('book_title', [''])[0], "Author": myQueryString.get('book_author', [''])[0], "ISBN": myQueryString.get('book_isbn', [''])[0], "Publisher": myQueryString.get('book_publisher', [''])[0], "Year": myQueryString.get('book_year', [''])[0]}
 
-        ## Define the query for the DB
-        ## Note: The following query is built on the fly based on what the user wants.
-        query = search_query_maker(db_columns) #create a searchable query string from the provided data
+        query = search_query_maker(db_columns)
 
-        mycursor.execute(query) #Execute the query
+        try:
+            mycursor.execute(query) #Execute the query
 
-        results = mycursor.fetchall() #Get the results in some "results" array
+            results = mycursor.fetchall() #Get the results in an array
 
-        ###Print all the results###
-        separator=', ' ## define how to separate printed items (see below)
-        for row in results:
-            outp += separator.join(map(str,row))  ## join all elements of "row" mapped as strings using "separator"
-            outp += "<br>\n" ## This inserts a line break after each element
+            separator=', ' ## define how to separate printed items (see below)
+            for row in results: #Prints the results
+                outp += separator.join(map(str,row))  ## join all elements of "row" mapped as strings using "separator"
+                outp += "<br>\n"
+        except:
+            outp = f"Something went wrong: {err}" #print the error if there is any
 
         outp += """
             <style>
@@ -379,7 +381,7 @@ def application(environ, start_response):
         query = insert_query_maker(db_columns)
 
         outp += "<p>Query is " + query + "<p>\n"
-        try:
+        try: #try to execute and print the query
             mycursor.execute(query)
             mycursor.execute(select_all)
             results = mycursor.fetchall()
@@ -390,7 +392,7 @@ def application(environ, start_response):
             for row in results:
                 outp += separator.join(map(str,row))
                 outp += "<br>\n"
-        except mysql.connector.Error as err:
+        except mysql.connector.Error as err: #if there are any SQL errors print them
             outp = f"Something went wrong: {err}"
 
             ## Finished; Close the DB
@@ -425,10 +427,10 @@ def application(environ, start_response):
         status = '200 OK'
         content = outp
 ################################################################
-    elif environ.get('PATH_INFO') == '/done' :
+    elif environ.get('PATH_INFO') == '/done' : #If the user is done sends to a fun page
         status = '200 OK'
         content = done
-    else:
+    else: #if the page does not exist go here
         status = '404 NOT FOUND'
         content = 'Page not found.'
     response_headers = [('Content-Type', 'text/html'), ('Content-Length', str(len(content)))]
